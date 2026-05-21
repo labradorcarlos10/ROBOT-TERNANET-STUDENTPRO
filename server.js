@@ -6,10 +6,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Shared secret — must match X-Bot-Secret header sent by the app/web
+const BOT_SECRET = process.env.BOT_SECRET || '';
+
 // Valid TernaNet subdomains (same list as frontend TERNA_INSTITUTIONS)
 const VALID_SUBDOMAINS = ['iutso', 'usm', 'uam', 'iutecp', 'ugma', 'uav', 'uvm', 'iutav'];
 
 app.post('/api/scrape-terna', async (req, res) => {
+    // Validate shared secret if BOT_SECRET env var is configured
+    if (BOT_SECRET) {
+        const incoming = req.headers['x-bot-secret'];
+        if (!incoming || incoming !== BOT_SECRET) {
+            return res.status(401).json({ error: 'No autorizado.' });
+        }
+    }
+
     const { username, password, subdomain } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Falta usuario o contraseña' });
 
